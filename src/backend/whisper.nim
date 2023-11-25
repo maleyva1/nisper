@@ -3,10 +3,10 @@ import utils
 from macros import getProjectPath
 
 when defined(mingw):
-  const dir = getProjectPath() & "/../whisper.cpp/winbuild"
+  const dir = getProjectPath() & "/../winbuild"
   {.passl: "-lwhisper -L" & dir.}
 else:
-  const dir = getProjectPath() & "/../whisper.cpp/build"
+  const dir = getProjectPath() & "/../build"
   {.passl: "-lwhisper -L" & dir.}
 
 const 
