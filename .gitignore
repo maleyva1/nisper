@@ -1,0 +1,8 @@
+*.bin
+*.a
+*.so
+*.wav
+*.exe
+nisper
+winbuild/
+build/
