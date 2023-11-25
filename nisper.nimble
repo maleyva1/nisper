@@ -2,7 +2,7 @@
 
 version       = "0.1.0"
 author        = "Mark Leyva"
-description   = "A new awesome nimble package"
+description   = "GUI frontend for Whisper"
 license       = "GPL-3.0-or-later"
 srcDir        = "src"
 bin           = @["nisper"]
