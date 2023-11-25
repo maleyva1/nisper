@@ -5,7 +5,7 @@ GUI frontend for Whisper.cpp
 ## TODO
 
 - Allow usage of video or audio
-- Allow arbritrary codecs for vidoe or audio
+- Allow arbritrary codecs for video or audio
 - Move transcription processing to background thread
 - Allow different output formats (SRT, VTT, CSV)
 - Allow saving to output file
