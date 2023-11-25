@@ -9,9 +9,9 @@ else:
   const dir = getProjectPath() & "/../build"
   {.passl: "-lwhisper -L" & dir.}
 
-const 
-    model = slurp("../../ggml-base.en.bin")
-    wheader = "../whisper.cpp/whisper.h"
+when defined(release):
+    const model = slurp("../../ggml-base.en.bin")
+const wheader = "../whisper.cpp/whisper.h"
 
 type
     ContextParams {.importc: "struct whisper_context_params", header: wheader.} = object
@@ -23,6 +23,7 @@ type
 
 proc contextDefaultParams(): ContextParams {.importc: "whisper_context_default_params", header: wheader.}
 proc initFromBufferWithParams(buffer: pointer; bufferSize: csize_t; params: ContextParams): ptr Context {.importc: "whisper_init_from_buffer_with_params", header: wheader.}
+proc initFromFileWithParams(buffer: cstring; params: ContextParams): ptr Context {.importc: "whisper_init_from_file_with_params", header: wheader.}
 proc fullDefaultParams(strategy: SamplingStrategy): FullParams {.importc: "whisper_full_default_params", header: wheader.}
 
 proc full(ctx: ptr Context; params: FullParams; buffer: ptr cfloat; bufferSize: cint): cint {.importc: "whisper_full", header: wheader.}
@@ -34,7 +35,10 @@ proc free(ctx: ptr Context) {.importc: "whisper_free", header: wheader.}
 
 proc transcribe*(path: string): string = 
     var params = contextDefaultParams()
-    var ctx = initFromBufferWithParams(model.cstring, model.len, params)
+    when defined(release):
+        var ctx = initFromBufferWithParams(model.cstring, model.len, params)
+    else:
+        var ctx = initFromFileWithParams("ggml-base.en.bin", params)
     if ctx == nil:
         stderr.writeLine("Failed to initialize whisper context")
         quit(3)
@@ -47,8 +51,6 @@ proc transcribe*(path: string): string =
         free(ctx)
         quit(1)
 
-    let p = 1
-    # if whisperfullparallel(ctx, wparams, pcm[0].addr, pcm.len.cint, p.cint) != 0:
     if full(ctx, wparams, pcm[0].addr, pcm.len.cint) != 0:
         stderr.writeLine("Failed to process audio!")
         free(ctx)

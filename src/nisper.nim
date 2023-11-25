@@ -1,29 +1,53 @@
-import nigui
-import nigui/msgbox
+import std/strutils
+
+import uing
 
 import backend/whisper
 
+type
+  ThreadArgs = tuple
+    com: ptr Channel[string]
+    file: string
+
+proc process(args: ThreadArgs) =
+  let transcription = transcribe(args.file)
+  args.com[].send(transcription)
+
 proc main() =
-  app.init
+  init()
   var 
-    window = newWindow("Nisper")
-    processing: Thread[void]
-  window.width = 600.scaleToDpi
-  window.height = 400.scaleToDpi
+    window: Window
+    menu = newMenu("File")
+    processing: Thread[ThreadArgs]
+    com: Channel[string]
+    selected: string
+  com.open()
+
+  menu.addItem("Load", proc(_: MenuItem; win: Window) =
+    let filename = win.openFile()
+    if filename.len > 0:
+      selected = filename
+  )
+  menu.addPreferencesItem()
+  menu.addQuitItem(
+    proc(): bool =
+      com.close()
+      window.destroy()
+      return true
+  )
+
+  window = newWindow("Nisper", 600, 480, true)
+  window.margined = true
 
   var 
-    vcontainer = newLayoutContainer(Layout_Vertical)
-    hcontainer = newLayoutContainer(Layout_Horizontal)
-    h2container = newLayoutContainer(Layout_Vertical)
-  vcontainer.padding = 10
-  window.add(vcontainer)
+    vcontainer = newVerticalBox(true)
+    hcontainer = newHorizontalBox(true)
+    h2container = newVerticalBox(true)
+  window.child = vcontainer
 
-  var textArea = newTextArea()
-  textArea.editable = false
+  var textArea = newMultilineEntry()
+  textArea.readOnly = true
 
-  var textLabel = newLabel("Transcription")
-
-  h2container.add(textLabel)
   h2container.add(textArea)
 
   vcontainer.add(h2container)
@@ -31,28 +55,28 @@ proc main() =
 
   var 
     transcribeBtn = newButton("Transcribe")
-    fileLoadBtn = newButton("Load audio")
-  hcontainer.add(fileLoadBtn)
   hcontainer.add(transcribeBtn)
 
-  var selected: string
+  proc recvResult(): bool =
+    let read = com.tryRecv()
+    if read.dataAvailable:
+      textArea.text = read.msg
+      return false
+    else:
+      return true
 
-  fileLoadBtn.onClick = proc(event: ClickEvent) =
-    var dialog = newOpenFileDialog()
-    dialog.title = "Select audio"
-    dialog.multiple = false
-    dialog.run()
-    if dialog.files.len > 0:
-      selected = dialog.files[0]
-
-  transcribeBtn.onClick = proc(event: ClickEvent) =
-    let result = transcribe(selected)
+  transcribeBtn.onClick = proc(sender: Button) =
     textArea.text = ""
-    textArea.addText(result)
+    if selected.isEmptyOrWhitespace():
+      window.error("Error", "No file selected!")
+    else:
+      let temp = (addr com, selected)
+      createThread(processing, process, temp)
+      timer(50, recvResult)
+      selected = ""
 
-  window.show()
-  app.run()
-
+  show(window)
+  mainLoop()
 
 when isMainModule:
   main()

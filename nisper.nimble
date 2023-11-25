@@ -12,7 +12,7 @@ bin           = @["nisper"]
 # Dependencies
 
 requires "nim >= 2.0.0"
-requires "nigui >= 0.2.7"
+requires "uing >= 0.8.0"
 requires "wave >= 1.1.0"
 
 task windows, "Build for Windows":

@@ -6,14 +6,17 @@ GUI frontend for Whisper.cpp
 
 - Allow usage of video or audio
 - Allow arbritrary codecs for video or audio
-- Move transcription processing to background thread
+- ~~Move transcription processing to background thread~~
 - Allow different output formats (SRT, VTT, CSV)
 - Allow saving to output file
 - Allow muxing subtitles to video (if video was selected)
 - Allow translation support
+- Allow loading custom models
+- Allow fetching more models
 - Make GUI more user-friendly
     - Show progress bar when transcribing/translating
     - Expose options to users
+    - Allow drag-n-drop?
 
 
 ## Sample Usage
