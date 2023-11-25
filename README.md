@@ -14,3 +14,8 @@ GUI frontend for Whisper.cpp
 - Make GUI more user-friendly
     - Show progress bar when transcribing/translating
     - Expose options to users
+
+
+## Sample Usage
+
+https://github.com/maleyva1/nisper/assets/29644545/ad8b5239-8f6e-4aa3-9e94-1a24573ff21a
