@@ -11,11 +11,11 @@ GUI frontend for Whisper.cpp
 - Allow saving to output file
 - Allow muxing subtitles to video (if video was selected)
 - Allow translation support
-- Allow loading custom models
+- ~~Allow loading custom models~~
 - Allow fetching more models
 - Make GUI more user-friendly
     - Show progress bar when transcribing/translating
-    - Expose options to users
+    - ~~Expose options to users~~
     - Allow drag-n-drop?
 
 

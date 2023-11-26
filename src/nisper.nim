@@ -1,4 +1,5 @@
 import std/strutils
+import std/options
 
 import uing
 
@@ -7,73 +8,110 @@ import backend/whisper
 type
   ThreadArgs = tuple
     com: ptr Channel[string]
-    file: string
+    file: Option[string]
+    model: Option[string]
 
 proc process(args: ThreadArgs) =
-  let transcription = transcribe(args.file)
-  args.com[].send(transcription)
+  discard
+  # var transcription: string
+  # if args.model.isEmptyOrWhitespace():
+    # transcription = transcribe(args.file)
+  # else:
+    # transcription = transcribe(args.file, args.model)
+  # args.com[].send(transcription)
 
 proc main() =
   init()
   var 
     window: Window
-    menu = newMenu("File")
     processing: Thread[ThreadArgs]
     com: Channel[string]
-    selected: string
+    selected: Option[string]
+    model: Option[string]
   com.open()
-
-  menu.addItem("Load", proc(_: MenuItem; win: Window) =
-    let filename = win.openFile()
-    if filename.len > 0:
-      selected = filename
-  )
-  menu.addPreferencesItem()
-  menu.addQuitItem(
-    proc(): bool =
-      com.close()
-      window.destroy()
-      return true
-  )
 
   window = newWindow("Nisper", 600, 480, true)
   window.margined = true
 
   var 
-    vcontainer = newVerticalBox(true)
-    hcontainer = newHorizontalBox(true)
-    h2container = newVerticalBox(true)
-  window.child = vcontainer
+    container = newHorizontalBox(true)
+    leftContainer = newVerticalBox(true)
+    rightContainer = newVerticalBox(true)
+    seperator = newVerticalSeparator()
+  window.child = container
 
-  var textArea = newMultilineEntry()
-  textArea.readOnly = true
+  container.add(leftContainer)
+  container.add(seperator)
+  container.add(rightContainer)
 
-  h2container.add(textArea)
+  var
+    optionsGroup = newGroup("Options", true)
+    optionsContainer = newVerticalBox(true)
+    modelSelected = newEntry("Default")
+    modelSelection = newCombobox(["A", "B"])
+    modelUpload = newButton("Use local custom model")
+    modelDownload = newButton("Download more models")
+    modelContainer = newVerticalBox(true)
+    outputSaveFormatLabel = newLabel("Output format")
+    outputSaveFormat = newRadioButtons(["txt", "srt", "vtt", "csv"])
+    outputSaveFormatContainer = newVerticalBox(true)
+    taskLabel = newLabel("Task")
+    taskButtons = newRadioButtons(["Transcribe", "Translate"])
+    taskContainer = newVerticalBox(true)
+    radioContainer = newHorizontalBox(true)
+  
+  modelSelected.readOnly = true
+  modelContainer.add(modelSelected)
+  modelContainer.add(modelSelection)
+  modelContainer.add(modelDownload)
+  modelContainer.add(modelUpload)
 
-  vcontainer.add(h2container)
-  vcontainer.add(hcontainer)
+  leftContainer.add(optionsGroup)
+  optionsGroup.child = optionsContainer
 
+  optionsContainer.add(modelContainer)
+
+  outputSaveFormatContainer.add(outputSaveFormatLabel)
+  outputSaveFormatContainer.add(outputSaveFormat)
+
+  taskContainer.add(taskLabel)
+  taskContainer.add(taskButtons)
+
+  radioContainer.add(outputSaveFormatContainer)
+  radioContainer.add(taskContainer)
+
+  optionsContainer.add(radioContainer)
+
+  # Actions
   var 
-    transcribeBtn = newButton("Transcribe")
-  hcontainer.add(transcribeBtn)
+    taskForm = newForm(true)
+    taskResults = newMultilineEntry()
+    mediaLoadBtn = newButton("Load Media")
+    transcribeBtn = newButton("Run")
+    saveBtn = newButton("Save Result")
+  rightContainer.add(taskForm)
+  taskForm.add("Results", taskResults, true)
+  taskForm.add("a", mediaLoadBtn)
+  taskForm.add("b", transcribeBtn)
+  taskForm.add("c", saveBtn)
 
   proc recvResult(): bool =
     let read = com.tryRecv()
     if read.dataAvailable:
-      textArea.text = read.msg
+      taskResults.text = read.msg
       return false
     else:
       return true
 
   transcribeBtn.onClick = proc(sender: Button) =
-    textArea.text = ""
-    if selected.isEmptyOrWhitespace():
+    taskResults.text = ""
+    if selected.isSome():
       window.error("Error", "No file selected!")
     else:
-      let temp = (addr com, selected)
+      let temp = (addr com, selected, model)
       createThread(processing, process, temp)
       timer(50, recvResult)
-      selected = ""
+      selected = none(string)
 
   show(window)
   mainLoop()
