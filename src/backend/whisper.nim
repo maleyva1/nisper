@@ -21,8 +21,8 @@ proc whisper*(options: TaskOptions): string =
     ## Run whisper with `options
     ## 
     let
-      options = newDefaultOptions(options.model)
-      w = newWhisper(options)
+      opts = newDefaultOptions(options.model)
+      w = newWhisper(opts)
     result = w.infer(options.path)
 
 when isMainModule:
